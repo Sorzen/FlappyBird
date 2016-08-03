@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Flappy Bird</title>
+    <style>
+        #cvs{
+            display: block;
+            margin: 0 auto;
+        }
+        #score{
+            width: 140px;
+            height: 40px;
+            line-height: 40px;
+            /*background-color: red;*/
+            position: absolute;
+            top:30px;
+            right: 320px;
+            text-align: center;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: "微软雅黑";
+        }
+    </style>
+</head>
+<body>
+<canvas id="cvs" width="800" height="600" style="border: 1px solid rgba(0,0,0,0);"></canvas>
+<div id="score"></div>
+<script src="./js/util.js"></script>
+<!--<script src="./js/loadImage.js"></script>-->
+<script src="./js/birds.js"></script>
+<script src="./js/pipe.js"></script>
+<script src="./js/sky.js"></script>
+<script src="./js/land.js"></script>
+<script>
+
+    //    var cvs = document.getElementById("cvs");
+    //    var ctx = cvs.getContext('2d');//设置画笔
+    //
+    //
+    //    var img = new Image();
+    //    var keyCode = 0;
+    //    document.addEventListener("keydown", function (e) {
+    //        console.log(e.keyCode);
+    //        keyCode = e.keyCode;
+    //    })
+    //    var bird = new Bird({
+    //        ctx: ctx,
+    //        img: img,
+    //        frame: 0,
+    //        direction: 0,
+    //        clipX: 0,
+    //        clipY: 0,
+    //        clipW: 52,
+    //        clipH: 45,
+    //        x: 30,
+    //        y: 30,
+    //        width: 52,
+    //        height: 45,
+    //        speedY: 4,
+    //    });
+    //    console.log(bird);
+    //
+    //
+    //    img.addEventListener("load", function () {
+    //        setInterval(function () {
+    //            ctx.clearRect(0, 0, cvs.width, cvs.width);
+    //            bird.draw();
+    //            bird.update();
+    //        }, 1000 / 10)
+    //
+    //        cvs.addEventListener("click", function () {
+    //            bird.options.speedY = -4;
+    //        })
+    //    })
+
+
+    (function () {
+        //图片路径
+        var imgsPath = {
+            "birds": "./imgs/birds.png",
+            "land": "./imgs/land.png",
+            "pipeDown": "./imgs/pipeDown.png",
+            "pipeUp": "./imgs/pipeUp.png",
+            "sky": "./imgs/sky.png"
+        };
+
+        var imgs = {};//用来存放图片
+        var loadImgCount = 0;//加载一张图片加一次
+        for (var key in imgsPath) {
+            var img = new Image();//创建一个图片对象
+            imgs[key] = img;
+//            console.log(imgs);
+            img.addEventListener("load", function () {
+                loadImgCount++;
+//                console.log(loadImgCount);
+                if (loadImgCount >= 5) {
+                    console.log("加载图片完毕");
+                    main();
+                }
+            });
+            console.log(loadImgCount);
+            img.src = imgsPath[key];
+        }
+
+
+        function main() {
+            var cvs = document.getElementById("cvs");
+            var ctx = cvs.getContext('2d');//设置画笔
+
+            var sc = document.getElementById("score");
+            var score = 0;//记录分数
+
+
+            //鸟类
+            var bird = new Bird({
+                ctx: ctx,
+                img: imgs["birds"],
+                frame: 0,
+                direction: 0,
+                clipX: 0,
+                clipY: 0,
+                clipW: 52,
+                clipH: 45,
+                x: 0,
+                y: 30,
+                width: 52,
+                height: 45,
+                speedY: 4,
+            });
+
+//            var i = 0;
+//            var pipe = "pipe";
+//            console.log(pipe +i);
+            //管道
+//            var pipe = new Pipe({
+//                ctx: ctx,
+//                upImg: imgs["pipeUp"],
+//                downImg: imgs["pipeDown"],
+//                frame: 0,
+//                direction: 0,
+//                clipX: 0,
+//                clipY: 0,
+//                clipW: 52,
+//                clipH: 45,
+//                x: 100,
+//                y: 30,
+//                width: 52,
+//                height: 45,
+//                speedY: 4,
+//            });
+            //管道
+            var arr = [];//用于存放管道
+            for (var i = 0; i < 6; i++) {
+                arr.push(new Pipe({
+                    ctx: ctx,
+                    upImg: imgs["pipeUp"],
+                    downImg: imgs["pipeDown"],
+                    frame: 0,
+                    direction: 0,
+                    clipX: 0,
+                    clipY: 0,
+                    clipW: 52,
+                    clipH: 45,
+                    x: 100 + imgs["pipeUp"].width * 3 * i,//每次渲染时x轴坐标
+                    y: 30,
+                    width: 52,
+                    height: 45,
+                    speedX: -2,
+                    speedPlus: -0.01
+                }))
+            }
+//            console.log(arr);
+
+            //天空
+            var sky = new Sky({
+                ctx: ctx,
+                img: imgs["sky"],
+                frame: 0,
+                x: 0,
+                y: 0
+            });
+
+//            //大地
+//            var land = new Land({
+//                ctx:ctx,
+//                img:imgs["land"],
+//                frame:0,
+//                x:0,
+//                y:0
+//            });
+
+            //大地
+            var arr2 = [];//用于存放大地
+            for (var i = 0; i < 4; i++) {
+                arr2.push(new Land({
+                    ctx: ctx,
+                    img: imgs["land"],
+                    cvs: cvs,
+                    frame: 0,
+                    x: imgs["land"].width * i,
+                    y: 488,
+                    speed: -2
+                }));
+            }
+            var timer = setInterval(function () {
+                ctx.clearRect(0, 0, cvs.width, cvs.width);
+
+                sky.draw();//绘制天空
+                bird.draw();
+                bird.update();
+                for (var i = 0; i < arr.length; i++) {
+                    arr[i].draw();//绘制管道
+                    arr[i].update();//更新管道图像
+                    if ((bird.options.x + bird.options.width / 2) ==arr[i].options.x ) {
+                        score++;
+                    }
+                }
+                for (var i = 0; i < arr2.length; i++) {
+                    arr2[i].draw();//绘制大地
+                    arr2[i].update();//更新大地
+                }
+
+
+
+//                console.log(ctx.isPointInPath(bird.options.x + bird.options.width / 2, bird.options.y + bird.options.height / 2));
+//                console.log(bird.options.x + bird.options.width / 2);
+//                console.log((bird.options.x + bird.options.width / 2, bird.options.y + bird.options.height / 2));
+                if (ctx.isPointInPath(bird.options.x + bird.options.width / 2, bird.options.y + bird.options.height / 2)) {//判断鸟的中心点是不是在管道路径上
+                    clearInterval(timer);//鸟的中心点在管道路径上就清除定时器
+                    console.log(score);//输出分数
+                    alert("您的得分为："+score);
+
+                } else if (bird.options.y + bird.options.height / 2 < 0 || bird.options.y + bird.options.height / 2 > 488) {
+                    clearInterval(timer);
+                    console.log(score);//输出分数
+                    alert("您的得分为："+score);
+
+                }
+                sc.innerHTML= "您的得分为："+score;
+                ctx.beginPath();//开始新路径，防止管道路径出现重影
+            }, 1000 / 30);
+
+            cvs.addEventListener("click", function () {
+                bird.options.speedY = -5;
+            });
+
+        }
+
+    }())
+
+
+</script>
+</body>
+</html>
